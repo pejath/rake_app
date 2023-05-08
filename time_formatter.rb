@@ -1,24 +1,30 @@
-class TimeFormatter
+# frozen_string_literal: true
 
+class TimeFormatter
   attr_reader :time_format, :uncorrect_formats
 
   FORMATS = {
-    'year' => '%Y-', 'month' => '%m-', 'day' => '%d',
-    'hour' => '%H:', 'minute' => '%M:', 'second' => '%S'
-  }
+    'year' => '%Y-', 'month' => '%m-', 'day' => '%d-',
+    'hour' => '%H:', 'minute' => '%M:', 'second' => '%S:'
+  }.freeze
 
   def initialize(params)
+    @format = params['format']
     @time_format = []
-    @uncorrect_formats = []
-    set_time_output(params['format'].split(','))
+    @incorrect_formats = []
   end
 
   def call
-    Time.now.strftime(@time_format.join)
+    set_time_output(@format.split(','))
+    if valid?
+      [200, Time.now.strftime(@time_format.join)]
+    else
+      [400, "Unknown time format #{@incorrect_formats}"]
+    end
   end
 
   def valid?
-    uncorrect_formats.empty?
+    @incorrect_formats.empty?
   end
 
   private
@@ -28,9 +34,8 @@ class TimeFormatter
       if FORMATS[format]
         @time_format << FORMATS[format]
       else
-        @uncorrect_formats << format
+        @incorrect_formats << format
       end
     end
   end
-
 end

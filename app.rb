@@ -1,33 +1,41 @@
+# frozen_string_literal: true
+
 require_relative 'time_formatter'
 require 'pry'
 
 class App
+  RESPONSE_HEADERS = { 'Content-Type' => 'text/plain' }.freeze
+
+  def initialize
+    @response = Rack::Response.new
+  end
 
   def call(env)
-    @request = Rack::Request.new(env)
+    request = Rack::Request.new(env)
 
-    case @request.path_info
+    case request.path_info
     when '/time'
-      res_response = TimeFormatter.new(@request.params)
-
-      if res_response.valid?
-        rack_response(200, res_response.call)
-      else
-        rack_response(400, "Unknown time format #{res_response.uncorrect_formats}")
-      end
+      time_response(request.params)
     else
-      rack_response(404, 'Not Found')
+      not_found_response
     end
   end
 
   private
 
-  def rack_response(status, body)
-    response = Rack::Response.new
-    response.status = status
-    response.write body.sub(/-$|:$/, '')
-    response.add_header('Content-Type', 'text/plain')
-    response.finish
+  def time_response(params)
+    status, body = TimeFormatter.new(params).call
+    rack_response(status, body)
   end
 
+  def not_found_response
+    rack_response(404, 'Not Found')
+  end
+
+  def rack_response(status, body)
+    @response.status = status
+    @response.write body.sub(/-$|:$/, '')
+    @response.headers.merge!(RESPONSE_HEADERS)
+    @response.finish
+  end
 end
