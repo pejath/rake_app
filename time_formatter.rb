@@ -17,9 +17,9 @@ class TimeFormatter
   def call
     set_time_output(@format.split(','))
     if valid?
-      [200, Time.now.strftime(@time_format.join)]
+      Time.now.strftime(@time_format.join)
     else
-      [400, "Unknown time format #{@incorrect_formats}"]
+      "Unknown time format #{@incorrect_formats}"
     end
   end
 
